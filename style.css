@@ -1,0 +1,41 @@
+/* style.css */
+
+/* Reset margins and make background transparent for OBS */
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden; 
+    background-color: transparent; 
+}
+
+/* Center the avatar at the bottom of the screen */
+#avatar-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end; 
+    height: 100vh; 
+}
+
+/* Set base size for the frog avatar and smooth transitions */
+#avatar {
+    height: 80vh; /* Adjustment: Frogs are short, making them taller looks better on stream */
+    object-fit: contain;
+    transition: transform 0.2s ease-in-out; 
+}
+
+/* The state when facing away */
+.facing-away {
+    transform: scaleX(-1); /* Flips the image horizontally */
+    
+    /* --- THE GREY SQUARE FIX WORKAROUND --- */
+    /* If the background of your grey square is white or light grey, 
+       this blend mode allows dark areas (your frog) to show 
+       through but attempts to block light areas (the grey square). 
+       This works best against a dark background in OBS!
+       Uncomment the line below (remove the /*) to try it: */
+    
+    /* mix-blend-mode: multiply; */
+    
+    /* Alternative option: make it translucent so the square is less noticeable */
+    opacity: 0.8; 
+}

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Twitch Chat & Swaying Frog Overlay</title>
+    <style>
+    body { 
+        background: transparent; 
+        font-family: 'Segoe UI', sans-serif; 
+        overflow: hidden; 
+        margin: 0;
+        padding: 0;
+    }
+
+    #chat-container { 
+        display: flex; 
+        /* CHANGE 1: Move from 'column' to 'row' */
+        flex-direction: row; 
+        align-items: flex-start; /* Aligns the frog and bubbles to the top */
+        height: 100vh; 
+        width: 1000px; /* Increased width to fit both side-by-side */
+        padding: 40px;
+        animation: sway 5s ease-in-out infinite; 
+        transform-origin: top center; 
+    }
+
+    #frog-head {
+        width: 250px;
+        height: auto;
+        /* CHANGE 2: Add space to the RIGHT of the frog */
+        margin-right: 30px; 
+        flex-shrink: 0; /* Prevents the frog from getting squished */
+        filter: drop-shadow(4px 4px 8px rgba(0,0,0,0.7));
+    }
+
+    .message-list {
+        display: flex;
+        /* CHANGE 3: We want messages to stack vertically inside their own area */
+        flex-direction: column-reverse; 
+        width: 100%;
+        margin-top: 50px; /* Lower the text slightly to align with the frog's mouth/smoke */
+    }
+
+    .message { 
+        background: rgba(20, 20, 20, 0.85); 
+        color: white; 
+        padding: 18px 25px; 
+        margin: 10px 0; 
+        border-radius: 15px; 
+        animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); 
+        max-width: 500px;
+        border-left: 5px solid #4ecdc4;
+        box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+    }
+
+    /* Bigger text for readability */
+    .username { font-size: 28px; font-weight: 900; margin-bottom: 8px; color: #4ecdc4; }
+    .text { font-size: 24px; line-height: 1.4; font-weight: 500; }
+
+    /* Slide in from the left (towards the right) */
+    @keyframes slideIn { 
+        from { opacity: 0; transform: translateX(-30px) scale(0.8); } 
+        to { opacity: 1; transform: translateX(0) scale(1); } 
+    }
+
+    @keyframes sway {
+        0%   { transform: rotate(0deg); }
+        25%  { transform: rotate(1.5deg); }
+        50%  { transform: rotate(0deg); }
+        75%  { transform: rotate(-1.5deg); }
+        100% { transform: rotate(0deg); }
+    }
+</style>
+</head>
+<body>
+    <div id="chat-container">
+        <img id="frog-head" src="assets/frog-head.png" alt="Swaying Frog Head">
+
+        <div id="message-list" class="message-list"></div>
+    </div>
+
+    <script>
+        // Use the new, separate message list for appending messages
+        const messageListContainer = document.getElementById('message-list');
+        const ws = new WebSocket('ws://localhost:8080');
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            // Only process if the message is a CHAT_MSG
+            if (data.type === 'CHAT_MSG') {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'message';
+                msgDiv.innerHTML = `
+                    <div class="username" style="color: ${data.color}">${data.user}</div>
+                    <div class="text">${data.text}</div>
+                `;
+                
+                // Add new message to the top of the message list
+                messageListContainer.prepend(msgDiv); 
+
+                // Auto-remove message after 10 seconds
+                setTimeout(() => msgDiv.remove(), 10000);
+            }
+        };
+    </script>
+</body>
+</html>

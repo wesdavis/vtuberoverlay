@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><title>Mic Listener (Minimize Me!)</title></head>
+<body>
+    <h1>Listening to mic... You can minimize this window!</h1>
+    <script>
+        // Connect to our invisible bridge
+        const ws = new WebSocket('ws://localhost:8080');
+
+        ws.onopen = async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const audioCtx = new AudioContext();
+            const analyser = audioCtx.createAnalyser();
+            const source = audioCtx.createMediaStreamSource(stream);
+            source.connect(analyser);
+            
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+            // Read the volume 20 times a second and send it to OBS
+            setInterval(() => {
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                let averageVolume = sum / dataArray.length;
+                
+                // Send the volume data across the bridge
+                ws.send(JSON.stringify({ volume: averageVolume }));
+            }, 50); 
+        };
+    </script>
+</body>
+</html>

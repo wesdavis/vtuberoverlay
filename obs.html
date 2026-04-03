@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="avatar-container"><img id="avatar" src="assets/front-view.png"></div>
+
+    <script>
+        const avatarElement = document.getElementById('avatar');
+        
+        // Connect to the bridge to receive data
+        const ws = new WebSocket('ws://localhost:8080');
+        
+        // Updated Intelligence Thresholds
+        const YELL_THRESHOLD = 27;   // Slightly lower to catch shouts easier
+        const MOUTH_THRESHOLD = 10;  // RAISED: This ignores mouse clicks/keyboard taps
+        const TURN_THRESHOLD = 8;   // RAISED: Anything below 8 is now "silence" (Noise Gate)
+        const TURN_DELAY = 1000;     // INCREASED: Wait 1 seconds of total silence before turning
+        let lastSpokeTime = 0;
+
+        // When we receive the volume number from Chrome...
+        ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    const averageVolume = data.volume;
+    
+    // NOISE GATE: Only wake up if volume is above our new TURN_THRESHOLD
+    if (averageVolume > TURN_THRESHOLD) {
+        lastSpokeTime = Date.now();
+        avatarElement.classList.remove('facing-away');
+        
+        if (averageVolume > YELL_THRESHOLD) {
+            avatarElement.src = "assets/front-view-scared.png";
+        } 
+        else if (averageVolume > MOUTH_THRESHOLD) {
+            // MOUTH ANIMATION LOGIC: 
+            // We use a "Pulse" check. If volume is high, we flicker the mouth open/closed 
+            // rapidly to simulate real speech patterns instead of a static open mouth.
+            if (Math.random() > 0.2) { 
+                avatarElement.src = "assets/front-view-talking.png";
+            } else {
+                avatarElement.src = "assets/front-view.png";
+            }
+        } 
+        else {
+            avatarElement.src = "assets/front-view.png";
+        }
+    } else {
+        // IDLE LOGIC: Check if it's time to turn around
+        if (Date.now() - lastSpokeTime > TURN_DELAY) {
+            avatarElement.classList.add('facing-away');
+            avatarElement.src = "assets/back-view.png";
+        } else {
+            // Quiet, but hasn't reached the delay yet: Face forward, mouth closed
+            avatarElement.src = "assets/front-view.png";
+        }
+    }
+};
+    </script>
+</body>
+</html>
