@@ -13,9 +13,9 @@
         const ws = new WebSocket('ws://localhost:8080');
         
         // Updated Intelligence Thresholds
-        const YELL_THRESHOLD = 27;   // Slightly lower to catch shouts easier
-        const MOUTH_THRESHOLD = 10;  // RAISED: This ignores mouse clicks/keyboard taps
-        const TURN_THRESHOLD = 8;   // RAISED: Anything below 8 is now "silence" (Noise Gate)
+        const YELL_THRESHOLD = 20;   // Slightly lower to catch shouts easier
+        const MOUTH_THRESHOLD = 8;  // RAISED: This ignores mouse clicks/keyboard taps
+        const TURN_THRESHOLD = 5;   // RAISED: Anything below 8 is now "silence" (Noise Gate)
         const TURN_DELAY = 1000;     // INCREASED: Wait 1 seconds of total silence before turning
         let lastSpokeTime = 0;
 
