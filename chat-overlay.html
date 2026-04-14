@@ -19,7 +19,6 @@
             width: 1000px; 
             
             /* THE FIX: The Buffer Zone */
-            /* This pushes the frog down and to the right, away from the OBS walls */
             padding-top: 80px; 
             padding-left: 80px; 
             
@@ -32,7 +31,6 @@
             height: auto;
             
             /* THE FIX: Frog Specific Positioning */
-            /* Increase these numbers if he is still hitting the edges */
             margin-top: 20px; 
             margin-left: 20px; 
             margin-right: 30px; 
@@ -79,9 +77,7 @@
 </head>
 <body>
     <div id="chat-container">
-        <!-- Make sure your asset name matches your folder exactly -->
         <img id="frog-head" src="assets/frog-head.png" alt="Swaying Frog Head">
-
         <div id="message-list" class="message-list"></div>
     </div>
 
@@ -93,48 +89,55 @@
         let speechQueue = [];
         let isSpeaking = false;
         
-
-        // This function handles the actual "Talk"
+        // This function handles fetching and playing audio from VoiceRSS
         function speakNext() {
-            // If we are already talking or the queue is empty, exit
             if (isSpeaking || speechQueue.length === 0) return;
 
-            isSpeaking = true;
             const messageToSay = speechQueue.shift(); 
 
-            // Pick your voice! "Brian" is the classic British Twitch voice. 
-            // Others include: "Justin" (US Male), "Salli" (US Female), "Amy" (British Female)
-            const voice = "Brian"; 
-            
-            // Encode the text so URLs can read spaces and symbols safely
-            const safeText = encodeURIComponent(messageToSay);
-            const apiUrl = `https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=${safeText}`;
+            if (!messageToSay || messageToSay.trim() === "") {
+                speakNext(); 
+                return;
+            }
 
-            // Create an audio player for the MP3 StreamElements gives us
+            isSpeaking = true;
+            console.log("1. Requesting audio from VoiceRSS..."); 
+
+            // --- PASTE YOUR FREE API KEY HERE ---
+            // DOUBLE CHECK: Make sure you leave the quotation marks around the key!
+            const apiKey = "aecfaeac1ec44369aa4568b77485e1c8"; 
+            
+            const safeText = encodeURIComponent(messageToSay);
+            
+            // FIX 1: Upgraded 'http' to 'https' for strict browser security
+            const apiUrl = `https://api.voicerss.org/?key=${apiKey}&hl=en-gb&v=Harry&c=MP3&f=16khz_16bit_mono&src=${safeText}`;
+
             const audio = new Audio(apiUrl);
             audio.volume = 1.0;
 
-            // When the audio finishes playing, trigger the next one
             audio.onended = () => {
                 isSpeaking = false;
                 speakNext();
             };
 
-            // If there's an error (like a bad network connection), skip and keep going
             audio.onerror = (err) => {
-                console.error("StreamElements audio failed to load.", err);
+                console.error("ERROR: VoiceRSS API failed to load.");
+                // FIX 2: This will print the URL to your console. 
+                // Click it to see exactly what VoiceRSS is telling us!
+                console.log("CLICK THIS LINK to see the exact VoiceRSS error:", apiUrl);
                 isSpeaking = false;
                 speakNext();
             };
 
-            // Play the audio! (Still requires the "Interact" click in OBS first)
             audio.play().catch(err => {
-                console.error("Browser blocked audio. Make sure to click 'Interact' in OBS!", err);
+                console.error("ERROR: Browser blocked the audio. YOU MUST CLICK THE SCREEN FIRST!", err);
                 isSpeaking = false;
                 speakNext();
             });
         }
 
+        // --- THE MISSING MAILBOX ---
+        // This listens for the WebSocket messages and triggers the chat bubbles and TTS
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             
